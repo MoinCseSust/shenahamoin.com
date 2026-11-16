@@ -89,7 +89,7 @@ export const PROPS = [
     posts:[] },
   { id:'contact', icon:'📮', tx:33, ty:26, name:'যোগাযোগ', roman:'CONTACT',
     say:'একটা লাল চিঠির বাক্স। ভেতরে কিছু নেই — এখনও।',
-    lede:'লেখা নিয়ে কথা বলতে চাইলে, ভুল ধরিয়ে দিতে চাইলে, বা কাজের প্রস্তাব থাকলে লিখুন। ঠিকানাটা এখানে বসাবেন: your@email.com',
+    lede:'লেখা নিয়ে কথা বলতে চাইলে, ভুল ধরিয়ে দিতে চাইলে, বা কাজের প্রস্তাব থাকলে লিখুন। ঠিকানা: <a href="mailto:moin@shenahamoin.com">moin@shenahamoin.com</a>',
     posts:[] }
 ];
 

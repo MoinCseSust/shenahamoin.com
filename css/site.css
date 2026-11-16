@@ -93,6 +93,7 @@ body.nogl #hud,body.nogl #touch,body.nogl #bar,body.nogl canvas{display:none}
             border:3px solid var(--ink);background:var(--paper);box-shadow:5px 6px 0 var(--shadow)}
 .crest h2{font-family:var(--fd);font-weight:800;font-size:clamp(28px,7vw,42px);margin:0;line-height:1.05}
 .crest .roman{font-family:var(--fu);font-size:10px;letter-spacing:.18em;color:var(--brass);display:block;margin-top:4px}
+.lede a{color:var(--brass);text-underline-offset:3px}
 .lede{font-size:16px;line-height:1.85;color:var(--paper);margin:18px 0 26px;max-width:56ch}
 .rule{height:3px;background:var(--paper);opacity:.25;margin:26px 0}
 .count{font-family:var(--fu);font-size:10px;letter-spacing:.16em;color:var(--paper-dim);margin-bottom:12px}
