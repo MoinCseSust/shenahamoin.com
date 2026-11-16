@@ -39,7 +39,7 @@ function index(){
 }
 
 function post(s, i){
-  const p = s.posts[i], path = `read.html?s=${s.id}&p=${encodeURIComponent(postKey(s, i))}`;
+  const p = s.posts[i], path = `read?s=${s.id}&p=${encodeURIComponent(postKey(s, i))}`;   // the host serves read.html as /read
   const desc = p.excerpt || strip((p.body || [])[0] || s.lede).slice(0, 160);
   head(`${p.title} — মইন · ${s.name}`, desc, path, {
     '@context': 'https://schema.org', '@type': 'Article', headline: p.title, description: desc, inLanguage: 'bn',
