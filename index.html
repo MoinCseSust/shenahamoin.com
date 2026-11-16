@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>মইন · লেখকের মানচিত্র</title>
+<meta name="description" content="বাংলা ব্যঙ্গ, প্রবন্ধ ও কল্পকাহিনির একটি মানচিত্র। হেঁটে বেড়ান, সেভ পয়েন্ট খুঁজুন, পড়ুন।">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Da+2:wght@500;600;800&family=Noto+Serif+Bengali:wght@400;500;700&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   TOKENS — palette is "সন্ধ্যার নদীতীর" (riverbank at dusk):
+   moss + clay road + indigo river + brass lamplight on plum-ink.
+   ============================================================ */
+:root{
+  --ink:        #1B1226;   /* plum-black — all chrome */
+  --ink-soft:   #2E2038;
+  --paper:      #EFE2C4;   /* aged manuscript — dialogue + panels */
+  --paper-dim:  #CDBB98;
+  --brass:      #F2B33D;   /* lamplight — highlights, prompts */
+  --clay:       #A8492F;   /* road, danger, underline */
+  --river:      #2E6C8E;
+  --moss:       #4E7D46;
+  --shadow:     rgba(27,18,38,.55);
+
+  --fd: "Baloo Da 2", "Hind Siliguri", system-ui, sans-serif;   /* display, Bengali */
+  --fb: "Noto Serif Bengali", "Baloo Da 2", Georgia, serif;      /* body, Bengali */
+  --fu: "Silkscreen", ui-monospace, monospace;                   /* utility, Latin only */
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--ink)}
+body{font-family:var(--fb);color:var(--paper);overscroll-behavior:none}
+canvas{display:block;image-rendering:pixelated;touch-action:none}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
+
+/* ---------- shared pixel-frame ---------- */
+.frame{
+  background:var(--paper);color:var(--ink);
+  border:3px solid var(--ink);
+  box-shadow:0 0 0 3px var(--paper), 0 0 0 6px var(--ink), 6px 8px 0 var(--shadow);
+}
+.tag{font-family:var(--fu);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+
+/* ---------- HUD ---------- */
+body.reading #hud, body.reading #touch, body.reading #bar{opacity:0;pointer-events:none}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:5;padding:14px;transition:opacity .2s;
+     display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.plate{background:rgba(27,18,38,.82);border:2px solid var(--paper-dim);padding:8px 12px;
+       backdrop-filter:blur(2px)}
+#who{font-family:var(--fd);font-weight:800;font-size:17px;line-height:1.15}
+#who small{display:block;font-family:var(--fu);font-size:9px;letter-spacing:.16em;color:var(--brass);margin-top:3px}
+#progress{font-family:var(--fd);font-size:13px;margin-top:7px;color:var(--paper-dim)}
+#progress b{color:var(--brass);font-weight:800}
+#tools{display:flex;gap:8px;pointer-events:auto}
+#tools button{width:44px;height:44px;background:rgba(27,18,38,.82);border:2px solid var(--paper-dim);
+              font-size:18px;line-height:1;display:grid;place-items:center}
+#tools button:hover{border-color:var(--brass);color:var(--brass)}
+
+/* ---------- dialogue bar ---------- */
+#bar{position:fixed;left:50%;transform:translate(-50%,120%);bottom:18px;width:min(680px,calc(100% - 32px));
+     z-index:6;padding:14px 18px 16px;transition:transform .22s cubic-bezier(.2,.9,.3,1.2)}
+#bar.on{transform:translate(-50%,0)}
+#bar .who{font-family:var(--fu);font-size:9px;letter-spacing:.16em;color:var(--clay)}
+#bar .say{font-family:var(--fd);font-weight:600;font-size:19px;margin-top:3px;line-height:1.35}
+#bar .cue{display:flex;align-items:center;gap:8px;margin-top:8px;font-family:var(--fd);font-size:13px;color:#5b4a3f}
+kbd{font-family:var(--fu);font-size:10px;background:var(--ink);color:var(--paper);
+    padding:3px 6px;border-radius:2px;letter-spacing:.06em}
+.blink{animation:blink 1s steps(2,end) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* ---------- overlays (title, section, reader, map, help) ---------- */
+.sheet{position:fixed;inset:0;z-index:20;display:none;background:rgba(15,10,22,.86);
+       backdrop-filter:blur(3px);overflow-y:auto;overscroll-behavior:contain}
+.sheet.on{display:block}
+.sheet-in{max-width:760px;margin:0 auto;padding:64px 18px 90px}
+
+/* title */
+#title{background:radial-gradient(120% 90% at 50% 0%,#3a2350 0%,#180f24 55%,#0d0814 100%)}
+#title .sheet-in{display:flex;flex-direction:column;align-items:center;justify-content:center;
+                 min-height:100dvh;text-align:center;padding-top:24px}
+#title h1{font-family:var(--fd);font-weight:800;font-size:clamp(38px,10vw,74px);margin:0;
+          line-height:1.05;color:var(--paper);text-shadow:0 4px 0 var(--clay),0 8px 0 rgba(0,0,0,.35)}
+#title .sub{font-family:var(--fb);font-size:clamp(15px,3.6vw,19px);color:var(--paper-dim);
+            margin:18px 0 4px;max-width:34ch;line-height:1.7}
+#title .marks{display:flex;gap:14px;font-size:26px;margin:26px 0 30px;filter:drop-shadow(0 3px 0 rgba(0,0,0,.4))}
+#title .marks span{animation:float 2.6s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-7px)}}
+#start{font-family:var(--fd);font-weight:800;font-size:20px;padding:14px 34px;
+       background:var(--brass);color:var(--ink);border:3px solid var(--ink);
+       box-shadow:0 6px 0 #8a5f14, 0 6px 0 3px var(--ink)}
+#start:active{transform:translateY(4px);box-shadow:0 2px 0 #8a5f14,0 2px 0 3px var(--ink)}
+#title .keys{font-family:var(--fu);font-size:10px;letter-spacing:.14em;color:#8a7ba0;margin-top:26px}
+
+/* section panel */
+.crest{display:flex;align-items:center;gap:16px;margin-bottom:6px}
+.crest .sym{width:74px;height:74px;display:grid;place-items:center;font-size:38px;flex:none;
+            border:3px solid var(--ink);background:var(--paper);box-shadow:5px 6px 0 var(--shadow)}
+.crest h2{font-family:var(--fd);font-weight:800;font-size:clamp(28px,7vw,42px);margin:0;line-height:1.05}
+.crest .roman{font-family:var(--fu);font-size:10px;letter-spacing:.18em;color:var(--brass);display:block;margin-top:4px}
+.lede{font-size:16px;line-height:1.85;color:var(--paper);margin:18px 0 26px;max-width:56ch}
+.rule{height:3px;background:var(--paper);opacity:.25;margin:26px 0}
+.count{font-family:var(--fu);font-size:10px;letter-spacing:.16em;color:var(--paper-dim);margin-bottom:12px}
+.post{display:block;width:100%;text-align:left;padding:16px 18px;margin-bottom:12px;
+      background:rgba(239,226,196,.06);border:2px solid rgba(239,226,196,.22);transition:.14s}
+.post:hover,.post:focus-visible{background:rgba(239,226,196,.13);transform:translateX(4px)}
+.post .meta{font-family:var(--fu);font-size:9px;letter-spacing:.14em;color:var(--brass)}
+.post h3{font-family:var(--fd);font-weight:600;font-size:20px;margin:5px 0 6px;line-height:1.3}
+.post p{margin:0;font-size:14.5px;line-height:1.75;color:var(--paper-dim)}
+.empty{padding:22px;border:2px dashed rgba(239,226,196,.3);font-size:15px;line-height:1.8;color:var(--paper-dim)}
+
+/* reader */
+#reader .sheet-in{max-width:660px}
+#reader .head{font-family:var(--fu);font-size:9px;letter-spacing:.18em;color:var(--brass)}
+#reader h2{font-family:var(--fd);font-weight:800;font-size:clamp(26px,6.4vw,38px);line-height:1.25;margin:10px 0 14px}
+#reader .byline{font-size:13px;color:var(--paper-dim);font-family:var(--fu);letter-spacing:.1em}
+#reader .body{margin-top:26px}
+#reader .body p{font-size:17px;line-height:2.05;margin:0 0 22px}
+#reader .body p:first-of-type::first-letter{font-family:var(--fd);font-weight:800;font-size:2.6em;
+  float:left;line-height:.9;padding:6px 10px 0 0;color:var(--brass)}
+#reader .end{font-family:var(--fu);font-size:10px;letter-spacing:.2em;color:var(--paper-dim);
+             text-align:center;margin:34px 0}
+
+/* travel + help lists */
+.sheet h2.plain{font-family:var(--fd);font-weight:800;font-size:30px;margin:0 0 6px}
+.sheet .plainsub{color:var(--paper-dim);font-size:15px;line-height:1.7;margin:0 0 24px}
+.trav{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:12px 14px;margin-bottom:10px;
+      border:2px solid rgba(239,226,196,.22);background:rgba(239,226,196,.05)}
+.trav:hover,.trav:focus-visible{background:rgba(239,226,196,.13)}
+.trav .s{font-size:24px;width:40px;height:40px;display:grid;place-items:center;flex:none;border:2px solid rgba(239,226,196,.3)}
+.trav b{font-family:var(--fd);font-weight:600;font-size:19px;display:block}
+.trav i{font-style:normal;font-size:13px;color:var(--paper-dim)}
+.trav .ok{margin-left:auto;color:var(--brass);font-family:var(--fu);font-size:9px;letter-spacing:.14em}
+.hl{display:grid;grid-template-columns:auto 1fr;gap:10px 16px;align-items:center;font-size:15px}
+.hl span{color:var(--paper-dim)}
+
+/* back button */
+.back{position:fixed;top:14px;left:14px;z-index:22;display:none;align-items:center;gap:8px;
+      font-family:var(--fd);font-weight:600;font-size:15px;padding:9px 16px;
+      background:var(--ink);border:2px solid var(--paper-dim)}
+.back.on{display:flex}
+.back:hover{border-color:var(--brass);color:var(--brass)}
+
+/* ---------- touch controls ---------- */
+#touch{position:fixed;inset:auto 0 0 0;z-index:7;display:none;padding:0 20px 26px;
+       justify-content:space-between;align-items:flex-end;pointer-events:none}
+#touch.on{display:flex}
+#pad{width:150px;height:150px;position:relative;pointer-events:auto}
+#pad button{position:absolute;width:52px;height:52px;background:rgba(27,18,38,.8);
+            border:2px solid var(--paper-dim);color:var(--paper);font-size:15px;display:grid;place-items:center}
+#pad .u{left:49px;top:0}#pad .d{left:49px;bottom:0}#pad .l{left:0;top:49px}#pad .r{right:0;top:49px}
+#pad button:active{background:var(--brass);color:var(--ink)}
+#act{pointer-events:auto;width:82px;height:82px;border-radius:50%;background:var(--brass);color:var(--ink);
+     border:3px solid var(--ink);font-family:var(--fd);font-weight:800;font-size:16px}
+#act:active{transform:translateY(3px)}
+
+@media (max-width:640px){
+  #who{font-size:15px}
+  #bar .say{font-size:17px}
+  .sheet-in{padding:60px 16px 130px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001s !important;transition-duration:.001s !important}
+}
+</style>
+</head>
+<body>
+
+<canvas id="game" role="img" aria-label="একটি টপ-ডাউন মানচিত্র। ছয়টি সেভ পয়েন্টে ছয়টি লেখার সেকশন। হাঁটতে না চাইলে উপরের মানচিত্র বোতাম থেকে সরাসরি যান।"></canvas>
+
+<!-- ============ HUD ============ -->
+<div id="hud">
+  <div>
+    <div class="plate">
+      <div id="who">মইন<small>LEKHOK &amp; COLUMNIST</small></div>
+      <div id="progress">সেভ পয়েন্ট: <b id="found">০</b> / ৬</div>
+    </div>
+  </div>
+  <div id="tools">
+    <button id="btnMap" title="মানচিত্র (M)" aria-label="মানচিত্র">🗺</button>
+    <button id="btnHelp" title="নির্দেশনা (H)" aria-label="নির্দেশনা">?</button>
+  </div>
+</div>
+
+<!-- ============ dialogue bar ============ -->
+<div id="bar" class="frame" role="status" aria-live="polite">
+  <div class="who" id="barWho">SAVE POINT</div>
+  <div class="say" id="barSay">…</div>
+  <div class="cue"><kbd>E</kbd> <span>ভেতরে ঢুকুন</span> <span class="blink">▼</span></div>
+</div>
+
+<!-- ============ title ============ -->
+<div id="title" class="sheet on">
+  <div class="sheet-in">
+    <div class="tag" style="color:var(--brass);margin-bottom:14px">A MAP OF THINGS I WROTE</div>
+    <h1>লেখকের<br>মানচিত্র</h1>
+    <p class="sub">ছয়টা সেভ পয়েন্ট। ছয় রকম লেখা। ব্যঙ্গ, বিশ্লেষণ, রিভিউ আর কিছু নিছক ফাজলামি — হেঁটে হেঁটে খুঁজে বার করতে হবে।</p>
+    <div class="marks">
+      <span style="animation-delay:0s">🐱</span><span style="animation-delay:.2s">👨‍🚀</span>
+      <span style="animation-delay:.4s">🦾</span><span style="animation-delay:.6s">🌳</span>
+      <span style="animation-delay:.8s">🕷️</span><span style="animation-delay:1s">🦆</span>
+    </div>
+    <button id="start">যাত্রা শুরু</button>
+    <div class="keys">WASD / ARROWS TO WALK &nbsp;·&nbsp; E TO ENTER &nbsp;·&nbsp; M FOR MAP</div>
+  </div>
+</div>
+
+<!-- ============ section panel ============ -->
+<div id="panel" class="sheet"><div class="sheet-in" id="panelIn"></div></div>
+
+<!-- ============ reader ============ -->
+<div id="reader" class="sheet"><div class="sheet-in" id="readerIn"></div></div>
+
+<!-- ============ fast travel ============ -->
+<div id="travel" class="sheet"><div class="sheet-in">
+  <h2 class="plain">মানচিত্র</h2>
+  <p class="plainsub">হাঁটতে ইচ্ছে না করলে সরাসরি চলে যান। সেভ পয়েন্ট বাছুন, চরিত্র সেখানে পৌঁছে যাবে।</p>
+  <div id="travelList"></div>
+</div></div>
+
+<!-- ============ help ============ -->
+<div id="help" class="sheet"><div class="sheet-in">
+  <h2 class="plain">কীভাবে চলবেন</h2>
+  <p class="plainsub">এটা একটা ম্যাপ, মেনু নয়। চরিত্রটাকে হাঁটিয়ে সেভ পয়েন্টের কাছে নিয়ে যান।</p>
+  <div class="hl">
+    <kbd>W A S D</kbd><span>চারদিকে হাঁটা (তীরচিহ্নেও চলবে)</span>
+    <kbd>E</kbd><span>সেভ পয়েন্টে ঢোকা</span>
+    <kbd>M</kbd><span>মানচিত্র খুলে সরাসরি যাওয়া</span>
+    <kbd>ESC</kbd><span>ফিরে আসা</span>
+    <kbd>TOUCH</kbd><span>ফোনে নিচের প্যাড আর গোল বোতাম</span>
+  </div>
+  <div class="rule"></div>
+  <p class="plainsub" style="margin:0">লেখাগুলো বাংলায়। পড়তে গিয়ে ফন্ট ভাঙলে ডিভাইসে বাংলা ফন্ট আপডেট করে নিন।</p>
+</div></div>
+
+<button class="back" id="back">← ফিরে যান</button>
+
+<!-- ============ touch ============ -->
+<div id="touch">
+  <div id="pad">
+    <button class="u" data-dir="up" aria-label="উপরে">▲</button>
+    <button class="l" data-dir="left" aria-label="বাঁয়ে">◀</button>
+    <button class="r" data-dir="right" aria-label="ডানে">▶</button>
+    <button class="d" data-dir="down" aria-label="নিচে">▼</button>
+  </div>
+  <button id="act">ঢুকুন</button>
+</div>
+
+<script>
+/* ==================================================================
+   ১. কনটেন্ট — এই অংশটুকুই কেবল বদলাবেন
+   Everything you edit lives here. Add a post = add an object to
+   `posts`. Use `url` if the piece lives on Facebook/Medium instead
+   of here; leave `url` empty and fill `body` to publish it on-site.
+   `icon` accepts an emoji, or set `sprite:'img/cat.png'` to use your
+   own 32x32 pixel art instead.
+   ================================================================== */
+const SECTIONS = [
+  {
+    id:'obantorota', name:'অবান্তরতা', roman:'OBANTOROTA', icon:'🐱',
+    kind:'ব্যঙ্গ-গবেষণা', tag:'গবেষণাপত্রের ছদ্মবেশে ফাজলামি',
+    color:'#E0574A', biome:'shrine', tx:13, ty:11,
+    say:'ভাগ্যবান বেড়ালের মন্দির। এখানে সব যুক্তি ফুটনোটসহ আসে।',
+    lede:'অ্যাবস্ট্র্যাক্ট আছে, মেথডলজি আছে, রেফারেন্স আছে — শুধু বিষয়টাই অবান্তর। গবেষণাপত্রের কাঠামোয় লেখা ব্যঙ্গ, যেখানে ফরম্যাটের গাম্ভীর্যই প্রধান কৌতুক।',
+    posts:[
+      { title:'চায়ের কাপে চুমুকের শব্দ ও পারিবারিক ক্ষমতাকাঠামো: একটি প্রাথমিক পর্যবেক্ষণ',
+        date:'২০২৬', kind:'গবেষণাপত্র',
+        excerpt:'তিনটি পরিবার, নয়টি কাপ, এবং একটি অনুমান যা প্রমাণের কোনো চেষ্টাই করা হয়নি।',
+        body:['এখানে লেখাটি বসবে। এই অংশ মুছে নিজের টেক্সট বসান — যত অনুচ্ছেদ দরকার, ততগুলো স্ট্রিং যোগ করুন।'], url:'' },
+      { title:'ঢাকার রিকশার হর্ন: একটি ধ্বনিতাত্ত্বিক শ্রেণিবিন্যাস',
+        date:'২০২৬', kind:'গবেষণাপত্র',
+        excerpt:'শব্দ নয়, আসলে বাক্য। প্রতিটি হর্নের একটি সম্পূর্ণ ব্যাকরণ আছে।',
+        body:['এখানে লেখাটি বসবে।'], url:'' }
+    ]
+  },
+  {
+    id:'gobhire', name:'গভীরে যাও', roman:'GO DEEPER', icon:'👨‍🚀',
+    kind:'বিশ্লেষণ', tag:'গভীর বিশ্লেষণ',
+    color:'#6C8CF0', biome:'crater', tx:36, ty:6,
+    say:'গর্তের কিনারায় একজন নভোচারী দাঁড়িয়ে। সে নিচের দিকে তাকিয়ে আছে।',
+    lede:'খবরের শিরোনামের নিচে যে কাঠামোটা চুপচাপ কাজ করে যায়, সেটাই এই সিরিজের বিষয়। ধীরে, তথ্য ধরে ধরে, তাড়াহুড়ো ছাড়া।',
+    posts:[
+      { title:'সিদ্ধান্ত কে নেয়, আর দায় কে নেয়', date:'২০২৬', kind:'প্রবন্ধ',
+        excerpt:'দুটো তালিকা পাশাপাশি রাখলে যে ফাঁকটা দেখা যায়, সেটাই গল্প।',
+        body:['এখানে লেখাটি বসবে।'], url:'' }
+    ]
+  },
+  {
+    id:'hostopath', name:'হস্তপাঠ', roman:'HOSTOPATH', icon:'🦾',
+    kind:'মুভি রিভিউ', tag:'ছবির হাত দেখা',
+    color:'#59C2B0', biome:'metal', tx:59, ty:11,
+    say:'একটা যান্ত্রিক হাত পর্দার দিকে ইশারা করছে। হাত দেখেই সে ছবির ভবিষ্যৎ বলে দেয়।',
+    lede:'ছবি দেখার পর হাত দেখার মতো করে বিচার — রেটিং নয়, বরং ছবিটা কী চেয়েছিল আর কতটা পেল, তার হিসেব।',
+    posts:[
+      { title:'Perfect Days — একই দিন বারবার, তবু ক্লান্তি নেই', date:'২০২৬', kind:'রিভিউ',
+        excerpt:'পুনরাবৃত্তি এখানে ফাঁদ নয়, বরং প্রার্থনার মতো।',
+        body:['এখানে লেখাটি বসবে।'], url:'' },
+      { title:'I Swear — শপথ, এবং তার পরের নীরবতা', date:'২০২৬', kind:'রিভিউ',
+        excerpt:'ছবিটা যেখানে থামে, দর্শক সেখান থেকেই ভাবতে শুরু করে।',
+        body:['এখানে লেখাটি বসবে।'], url:'' }
+    ]
+  },
+  {
+    id:'sidratul', name:'সিদরাতুল মুনতাহা', roman:'SIDRATUL MUNTAHA', icon:'🌳',
+    kind:'ইসলামি প্রবন্ধ', tag:'বিশ্বাস, মূল্যবোধ, অনুসন্ধান',
+    color:'#7CB342', biome:'garden', tx:59, ty:37,
+    say:'সীমানার শেষ গাছ। এর ওপারে জ্ঞান থামে, বিশ্বাস শুরু হয়।',
+    lede:'গবেষণাধর্মী লেখা — বিশ্বাস ও মূল্যবোধ নিয়ে, উৎস ধরে ধরে। ধর্মীয় ভাষায় নয়, প্রশ্নের ভাষায়।',
+    posts:[
+      { title:'সীমানা যেখানে, প্রশ্নও সেখানেই', date:'২০২৬', kind:'প্রবন্ধ',
+        excerpt:'সিরিজের প্রথম কিস্তি — কেন শেষ সীমাটাই সবচেয়ে জরুরি জায়গা।',
+        body:['এখানে লেখাটি বসবে।'], url:'' }
+    ]
+  },
+  {
+    id:'webspyder', name:'ওয়েব স্পাইডার', roman:'WEB SPYDER', icon:'🕷️',
+    kind:'সোশ্যাল মিডিয়া', tag:'ওয়েব-সংস্কৃতির জাল',
+    color:'#A97BE0', biome:'forest', tx:36, ty:42,
+    say:'জঙ্গলের ভেতর একটা তুলোর মাকড়সা। তার জাল থেকে বেরোনোর রাস্তা নেই — সেটাই বিষয়।',
+    lede:'প্ল্যাটফর্ম, অ্যালগরিদম, ভাইরাল হওয়ার অর্থনীতি — যে জাল আমাদের ধরে রেখেছে, তাকে নিয়েই রসিকতা।',
+    posts:[
+      { title:'ফিড আপনাকে চেনে, আপনি ফিডকে চেনেন না', date:'২০২৬', kind:'ব্যঙ্গ',
+        excerpt:'সম্পর্কটা একতরফা, অথচ দুজনেই রোজ দেখা করে।',
+        body:['এখানে লেখাটি বসবে।'], url:'' }
+    ]
+  },
+  {
+    id:'hanshke', name:'হাঁসকে হাসান', roman:'HANSHKE HASHAN', icon:'🦆',
+    kind:'হাসির লেখা', tag:'নিছক মজা, কোনো উদ্দেশ্য নেই',
+    color:'#F2B33D', biome:'pond', tx:13, ty:37,
+    say:'পুকুরপাড়ে একটা হাঁস। সে কিছু বলছে না, তবু হাসি পাচ্ছে।',
+    lede:'কোনো বার্তা নেই, শিক্ষা নেই, শেষে কোনো মোরাল নেই। শুধু হাসানোর জন্য লেখা।',
+    posts:[
+      { title:'যে লোকটা প্রতিদিন লিফটে হ্যালো বলে', date:'২০২৬', kind:'রম্য',
+        excerpt:'আট তলা। সাতটা হ্যালো। একটা ছোট যুদ্ধ।',
+        body:['এখানে লেখাটি বসবে।'], url:'' }
+    ]
+  }
+];
+
+/* সাইনবোর্ড ও চিঠির বাক্স — ম্যাপের ছোট দুটি জিনিস */
+const PROPS = [
+  { id:'about', icon:'🪧', tx:39, ty:26, name:'লেখক সম্পর্কে', roman:'ABOUT',
+    say:'একটা কাঠের সাইনবোর্ড। কেউ একজন নিজের পরিচয় লিখে রেখেছে।',
+    lede:'মইন। টরন্টোয় থাকি, দিনের বেলা ইমিগ্রেশনের কাগজপত্র নিয়ে কাজ করি, বাকি সময় বাংলায় লিখি। ব্যঙ্গ আমার প্রধান সুর — তবে ব্যঙ্গের নিচে সাধারণত রাগ বা মায়া, দুটোর একটা থাকে।',
+    posts:[] },
+  { id:'contact', icon:'📮', tx:33, ty:26, name:'যোগাযোগ', roman:'CONTACT',
+    say:'একটা লাল চিঠির বাক্স। ভেতরে কিছু নেই — এখনও।',
+    lede:'লেখা নিয়ে কথা বলতে চাইলে, ভুল ধরিয়ে দিতে চাইলে, বা কাজের প্রস্তাব থাকলে লিখুন। ঠিকানাটা এখানে বসাবেন: your@email.com',
+    posts:[] }
+];
+
+/* ==================================================================
+   ২. ইঞ্জিন — এর নিচে সাধারণত হাত দিতে হবে না
+   ================================================================== */
+const TS=32, MW=72, MH=48;
+const T={GRASS:0,GRASS2:1,PATH:2,PATHEDGE:3,SAND:4,WATER:5,DEEP:6,STONE:7,METAL:8,DARK:9,
+         CRATER:10,FLOWER:11,LILY:12,TREE:13,ROCK:14,PINE:15,PILLAR:16};
+const SOLID=new Set([T.WATER,T.DEEP,T.TREE,T.ROCK,T.PINE,T.PILLAR]);
+const COL={
+  [T.GRASS] :['#4E7D46','#446f3d'], [T.GRASS2]:['#548449','#4a7541'],
+  [T.PATH]  :['#A8804F','#9a7346'], [T.PATHEDGE]:['#8f6b41','#836140'],
+  [T.SAND]  :['#D8B87A','#c9a86c'], [T.WATER] :['#2E6C8E','#2a6081'],
+  [T.DEEP]  :['#1F4E6B','#1b465f'], [T.STONE] :['#7A7386','#6d6778'],
+  [T.METAL] :['#5E6B7E','#556173'], [T.DARK]  :['#2F4A34','#28402d'],
+  [T.CRATER]:['#3A3350','#332d47'], [T.FLOWER]:['#4E7D46','#446f3d'],
+  [T.LILY]  :['#2E6C8E','#2a6081'], [T.TREE]  :['#4E7D46','#446f3d'],
+  [T.ROCK]  :['#7A7386','#6d6778'], [T.PINE]  :['#2F4A34','#28402d'],
+  [T.PILLAR]:['#7A7386','#6d6778']
+};
+const map=new Uint8Array(MW*MH);
+const at=(x,y)=>map[y*MW+x];
+const set=(x,y,v)=>{if(x>=0&&y>=0&&x<MW&&y<MH)map[y*MW+x]=v};
+function hash(x,y,s=0){
+  let n=Math.imul(x,374761393)^Math.imul(y,668265263)^Math.imul(s+1,1442695041);
+  n=Math.imul(n^(n>>>13),1274126177); n^=n>>>16;
+  return (n>>>0)/4294967296;
+}
+
+/* ---- world build ---- */
+(function build(){
+  for(let y=0;y<MH;y++)for(let x=0;x<MW;x++) set(x,y, hash(x,y,1)>.5?T.GRASS:T.GRASS2);
+  const disc=(cx,cy,r,t,jit=1)=>{for(let y=cy-r-1;y<=cy+r+1;y++)for(let x=cx-r-1;x<=cx+r+1;x++){
+    const d=Math.hypot(x-cx,y-cy)+ (hash(x,y,7)-.5)*jit; if(d<=r) set(x,y,t);}};
+  const road=(x1,y1,x2,y2)=>{ // L-shaped, 3 wide
+    const put=(x,y)=>{for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++) set(x+i,y+j,T.PATH);};
+    const sx=Math.sign(x2-x1)||1; for(let x=x1;x!==x2;x+=sx) put(x,y1);
+    const sy=Math.sign(y2-y1)||1; for(let y=y1;y!==y2;y+=sy) put(x2,y);
+    put(x2,y2);
+  };
+  const HX=36,HY=26;
+  // biomes
+  disc(36,7,9,T.CRATER,2.5); disc(36,6,4,T.STONE,1);                // crater
+  disc(13,11,8,T.STONE,2.5); disc(13,11,3,T.SAND,1);               // shrine plaza
+  disc(59,11,8,T.METAL,2.5); disc(59,11,4,T.STONE,1);              // tech plaza
+  disc(59,37,10,T.SAND,3); disc(59,37,5,T.GRASS2,1.4);             // garden
+  disc(36,42,11,T.DARK,3);                                         // dark forest
+  disc(13,42,7,T.WATER,2.2); disc(19,43,5,T.WATER,2); disc(13,42,3,T.DEEP,1);
+  disc(13,37,5,T.SAND,1.8); disc(19,39,4,T.SAND,1.6);            // pond + shore
+  // roads
+  road(HX,HY,13,11); road(HX,HY,36,6); road(HX,HY,59,11);
+  road(HX,HY,59,37); road(HX,HY,36,42); road(HX,HY,13,37);
+  for(let x=8;x<64;x++){for(let j=-1;j<=1;j++) set(x,HY+j,T.PATH);}
+  // clear plazas
+  SECTIONS.concat(PROPS).forEach(s=>{ for(let y=s.ty-2;y<=s.ty+2;y++)for(let x=s.tx-2;x<=s.tx+2;x++){
+    const t=at(x,y); if(t===T.WATER||t===T.DEEP) set(x,y,T.SAND);
+    if(t===T.TREE||t===T.ROCK||t===T.PINE) set(x,y,T.GRASS); } });
+  // scatter
+  const nearPath=(x,y)=>{for(let j=-2;j<=2;j++)for(let i=-2;i<=2;i++){const t=at(x+i,y+j);if(t===T.PATH)return true}return false};
+  const nearNode=(x,y)=>SECTIONS.concat(PROPS).some(s=>Math.hypot(x-s.tx,y-s.ty)<4);
+  for(let y=2;y<MH-2;y++)for(let x=2;x<MW-2;x++){
+    const t=at(x,y); const h=hash(x,y,3);
+    if(nearPath(x,y)||nearNode(x,y))continue;
+    if(t===T.GRASS||t===T.GRASS2){ if(h>.94)set(x,y,T.TREE); else if(h>.915)set(x,y,T.ROCK); else if(h>.84)set(x,y,T.FLOWER); }
+    else if(t===T.DARK){ if(h>.68)set(x,y,T.PINE); else if(h>.6)set(x,y,T.ROCK); }
+    else if(t===T.SAND){ if(h>.95)set(x,y,T.TREE); }
+    else if(t===T.WATER){ if(h>.78)set(x,y,T.LILY); }
+    else if(t===T.CRATER){ if(h>.94)set(x,y,T.ROCK); }
+  }
+  // shrine pillars
+  [[-4,-4],[4,-4],[-4,4],[4,4]].forEach(([dx,dy])=>set(13+dx,11+dy,T.PILLAR));
+  // border wall
+  for(let x=0;x<MW;x++){for(let k=0;k<2;k++){set(x,k,T.PINE);set(x,MH-1-k,T.PINE)}}
+  for(let y=0;y<MH;y++){for(let k=0;k<2;k++){set(k,y,T.PINE);set(MW-1-k,y,T.PINE)}}
+})();
+
+/* ---- state ---- */
+const cvs=document.getElementById('game'), ctx=cvs.getContext('2d',{alpha:false});
+const P={x:36*TS+16, y:29*TS, dir:'down', moving:false, t:0};
+const cam={x:P.x,y:P.y};
+let zoom=2, VW=0, VH=0, running=false, near=null, visited=new Set(), time=0;
+const NODES=SECTIONS.concat(PROPS);
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+function resize(){
+  const dpr=Math.min(devicePixelRatio||1,2);
+  VW=innerWidth; VH=innerHeight;
+  cvs.width=VW*dpr; cvs.height=VH*dpr; cvs.style.width=VW+'px'; cvs.style.height=VH+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.imageSmoothingEnabled=false;
+  zoom = VW<640 ? 1.5 : (VW<1100 ? 1.8 : 2.1);
+}
+addEventListener('resize',resize); resize();
+
+/* ---- input ---- */
+const keys={};
+const DIRS={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right'};
+addEventListener('keydown',e=>{
+  if(DIRS[e.code]){keys[DIRS[e.code]]=true;e.preventDefault()}
+  if(e.code==='KeyE'||e.code==='Space'||e.code==='Enter'){ if(running&&near){interact();e.preventDefault()} }
+  if(e.code==='KeyM'&&running) toggle('travel');
+  if(e.code==='KeyH'&&running) toggle('help');
+  if(e.code==='Escape') closeTop();
+});
+addEventListener('keyup',e=>{ if(DIRS[e.code]){keys[DIRS[e.code]]=false;e.preventDefault()} });
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
+
+const touch=document.getElementById('touch');
+if(matchMedia('(pointer:coarse)').matches) touch.classList.add('on');
+document.querySelectorAll('#pad button').forEach(b=>{
+  const d=b.dataset.dir, on=e=>{e.preventDefault();keys[d]=true}, off=e=>{e.preventDefault();keys[d]=false};
+  b.addEventListener('touchstart',on,{passive:false}); b.addEventListener('touchend',off);
+  b.addEventListener('touchcancel',off); b.addEventListener('mousedown',on); b.addEventListener('mouseup',off);
+  b.addEventListener('mouseleave',off);
+});
+document.getElementById('act').addEventListener('click',()=>{ if(near) interact(); });
+if(touch.classList.contains('on')){
+  document.querySelector('#bar .cue').innerHTML='<span>নিচের গোল বোতাম চাপুন</span> <span class="blink">▼</span>';
+}
+
+/* ---- movement ---- */
+function blocked(px,py){
+  const pts=[[px-5,py-3],[px+5,py-3],[px-5,py+5],[px+5,py+5]];
+  return pts.some(([x,y])=>{
+    const tx=Math.floor(x/TS), ty=Math.floor(y/TS);
+    if(tx<0||ty<0||tx>=MW||ty>=MH) return true;
+    return SOLID.has(at(tx,ty));
+  });
+}
+function step(dt){
+  const sp=112*dt; let dx=0,dy=0;
+  if(keys.up)dy-=1; if(keys.down)dy+=1; if(keys.left)dx-=1; if(keys.right)dx+=1;
+  if(dx&&dy){dx*=.707;dy*=.707}
+  P.moving=!!(dx||dy);
+  if(dy<0)P.dir='up'; else if(dy>0)P.dir='down'; else if(dx<0)P.dir='left'; else if(dx>0)P.dir='right';
+  if(dx){const nx=P.x+dx*sp; if(!blocked(nx,P.y))P.x=nx}
+  if(dy){const ny=P.y+dy*sp; if(!blocked(P.x,ny))P.y=ny}
+  if(P.moving)P.t+=dt*9; else P.t=0;
+  cam.x+=(P.x-cam.x)*Math.min(1,dt*6); cam.y+=(P.y-cam.y)*Math.min(1,dt*6);
+
+  let found=null,best=1e9;
+  for(const n of NODES){
+    const d=Math.hypot(P.x-(n.tx*TS+16), P.y-(n.ty*TS+16));
+    if(d<52&&d<best){best=d;found=n}
+  }
+  if(found!==near){ near=found; showBar(found); }
+}
+
+/* ---- drawing ---- */
+function tile(t,x,y,px,py){
+  const c=COL[t]||COL[T.GRASS];
+  ctx.fillStyle=c[(x+y)&1?0:1]; ctx.fillRect(px,py,TS,TS);
+  const h=hash(x,y,11);
+  switch(t){
+    case T.GRASS: case T.GRASS2:
+      ctx.fillStyle='rgba(255,255,255,.05)';
+      ctx.fillRect(px+((h*24)|0),py+((hash(x,y,12)*24)|0),3,2);
+      ctx.fillRect(px+((hash(x,y,13)*24)|0),py+((hash(x,y,14)*24)|0),2,3); break;
+    case T.FLOWER:
+      ctx.fillStyle='rgba(255,255,255,.05)'; ctx.fillRect(px+6,py+20,3,2);
+      ctx.fillStyle=h>.5?'#F2B33D':'#E0574A'; ctx.fillRect(px+10+((h*8)|0),py+12,4,4);
+      ctx.fillStyle='#2f5a2b'; ctx.fillRect(px+11+((h*8)|0),py+16,2,5); break;
+    case T.PATH:
+      ctx.fillStyle='rgba(0,0,0,.10)'; ctx.fillRect(px+((h*26)|0),py+((hash(x,y,15)*26)|0),4,3);
+      ctx.fillStyle='rgba(255,255,255,.06)'; ctx.fillRect(px+((hash(x,y,16)*26)|0),py+((hash(x,y,17)*26)|0),3,3); break;
+    case T.SAND:
+      ctx.fillStyle='rgba(255,255,255,.10)'; ctx.fillRect(px+((h*26)|0),py+((hash(x,y,18)*26)|0),3,2); break;
+    case T.STONE: case T.METAL: case T.CRATER:
+      ctx.fillStyle='rgba(0,0,0,.16)'; ctx.fillRect(px,py+TS-3,TS,3); ctx.fillRect(px+TS-3,py,3,TS);
+      if(t===T.CRATER&&h>.8){ctx.fillStyle='rgba(255,255,255,.5)';ctx.fillRect(px+((h*26)|0),py+((hash(x,y,19)*26)|0),2,2)}
+      break;
+    case T.DARK:
+      ctx.fillStyle='rgba(0,0,0,.14)'; ctx.fillRect(px+((h*26)|0),py+((hash(x,y,20)*26)|0),5,3); break;
+    case T.WATER: case T.DEEP: case T.LILY:{
+      const w=Math.sin(time*1.6+x*.7+y*.4);
+      ctx.fillStyle='rgba(255,255,255,'+(w>.6?.16:.06)+')';
+      ctx.fillRect(px+4+((w*4)|0),py+10,12,2);
+      if(t===T.LILY){ctx.fillStyle='#3f7a3a';ctx.beginPath();ctx.arc(px+16,py+16,7,0,7);ctx.fill();
+        ctx.fillStyle='#F0D7E4';ctx.fillRect(px+14,py+13,4,4);}
+      break;}
+    case T.TREE: case T.PINE:{
+      ctx.fillStyle=t===T.PINE?COL[T.DARK][0]:COL[T.GRASS][0]; ctx.fillRect(px,py,TS,TS);
+      ctx.fillStyle='rgba(0,0,0,.22)'; ctx.beginPath();ctx.ellipse(px+16,py+27,11,4,0,0,7);ctx.fill();
+      ctx.fillStyle='#6B4A2E'; ctx.fillRect(px+14,py+18,4,9);
+      const g1=t===T.PINE?'#2F5C36':'#3E7A38', g2=t===T.PINE?'#254a2c':'#33682e';
+      ctx.fillStyle=g2; ctx.beginPath();ctx.arc(px+16,py+14,12,0,7);ctx.fill();
+      ctx.fillStyle=g1; ctx.beginPath();ctx.arc(px+13,py+11,8,0,7);ctx.fill();
+      break;}
+    case T.ROCK:
+      ctx.fillStyle=COL[T.GRASS][0]; ctx.fillRect(px,py,TS,TS);
+      ctx.fillStyle='rgba(0,0,0,.2)'; ctx.fillRect(px+6,py+22,20,4);
+      ctx.fillStyle='#8A8296'; ctx.fillRect(px+7,py+12,18,11);
+      ctx.fillStyle='#A49CB0'; ctx.fillRect(px+9,py+10,11,7); break;
+    case T.PILLAR:
+      ctx.fillStyle=COL[T.STONE][0]; ctx.fillRect(px,py,TS,TS);
+      ctx.fillStyle='rgba(0,0,0,.25)'; ctx.fillRect(px+4,py+24,24,6);
+      ctx.fillStyle='#9A93A6'; ctx.fillRect(px+8,py-2,16,28);
+      ctx.fillStyle='#C4BCD0'; ctx.fillRect(px+6,py-6,20,6); break;
+  }
+}
+function drawPlayer(px,py){
+  const f=P.moving?(Math.floor(P.t)%4):0, bob=(f===1||f===3)?1:0;
+  ctx.fillStyle='rgba(0,0,0,.28)'; ctx.beginPath();ctx.ellipse(px,py+13,9,4,0,0,7);ctx.fill();
+  const y=py-bob;
+  ctx.fillStyle='#2E4A7D'; ctx.fillRect(px-6,y-2,5,13); ctx.fillRect(px+1,y-2,5,13);  // legs
+  if(P.moving){ctx.fillStyle='#243c66'; ctx.fillRect(px+(f<2?-6:1),y+6,5,5)}
+  ctx.fillStyle='#C8503F'; ctx.fillRect(px-8,y-14,16,14);                              // kurta
+  ctx.fillStyle='#a83f33'; ctx.fillRect(px-8,y-4,16,3);
+  ctx.fillStyle='#E8C9A0'; ctx.fillRect(px-9,y-12,3,8); ctx.fillRect(px+6,y-12,3,8);   // arms
+  ctx.fillStyle='#E8C9A0'; ctx.fillRect(px-7,y-26,14,13);                              // head
+  ctx.fillStyle='#1E1520'; ctx.fillRect(px-8,y-28,16,7);                               // hair
+  if(P.dir!=='up'){
+    ctx.fillStyle='#1E1520';
+    const off=P.dir==='left'?-3:P.dir==='right'?3:0;
+    ctx.fillRect(px-5+off,y-20,2,2); ctx.fillRect(px+3+off,y-20,2,2);
+  }
+}
+function drawNode(n){
+  const px=n.tx*TS+16, py=n.ty*TS+16;
+  const pulse=reduce?0:Math.sin(time*2+n.tx)*3;
+  // pad
+  ctx.fillStyle='rgba(0,0,0,.25)'; ctx.beginPath();ctx.ellipse(px,py+10,22,9,0,0,7);ctx.fill();
+  ctx.fillStyle=(n.color||'#EFE2C4')+'33'; ctx.beginPath();ctx.ellipse(px,py+8,20,8,0,0,7);ctx.fill();
+  ctx.strokeStyle=n.color||'#EFE2C4'; ctx.lineWidth=2;
+  ctx.beginPath();ctx.ellipse(px,py+8,20,8,0,0,7);ctx.stroke();
+  if(visited.has(n.id)){ctx.fillStyle=n.color||'#EFE2C4';ctx.beginPath();ctx.ellipse(px,py+8,6,3,0,0,7);ctx.fill()}
+  // symbol
+  ctx.font='30px system-ui, "Apple Color Emoji","Segoe UI Emoji"';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(n.icon, px, py-12+pulse);
+  // label
+  ctx.font='600 12px "Baloo Da 2", system-ui, sans-serif';
+  const w=ctx.measureText(n.name).width+14;
+  ctx.fillStyle='rgba(27,18,38,.8)'; ctx.fillRect(px-w/2,py+18,w,18);
+  ctx.fillStyle=n.color||'#EFE2C4'; ctx.fillText(n.name,px,py+28);
+}
+function frame(dt){
+  time+=dt; if(running) step(dt);
+  const cx=Math.max(VW/2/zoom,Math.min(MW*TS-VW/2/zoom,cam.x));
+  const cy=Math.max(VH/2/zoom,Math.min(MH*TS-VH/2/zoom,cam.y));
+  ctx.save(); ctx.fillStyle='#0d0814'; ctx.fillRect(0,0,VW,VH);
+  ctx.translate(VW/2,VH/2); ctx.scale(zoom,zoom); ctx.translate(-cx,-cy);
+  const x0=Math.max(0,Math.floor((cx-VW/2/zoom)/TS)), x1=Math.min(MW-1,Math.ceil((cx+VW/2/zoom)/TS));
+  const y0=Math.max(0,Math.floor((cy-VH/2/zoom)/TS)), y1=Math.min(MH-1,Math.ceil((cy+VH/2/zoom)/TS));
+  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++) tile(at(x,y),x,y,x*TS,y*TS);
+  const drawables=NODES.filter(n=>n.ty>=y0-2&&n.ty<=y1+2).map(n=>({y:n.ty*TS+16,f:()=>drawNode(n)}));
+  drawables.push({y:P.y,f:()=>drawPlayer(P.x,P.y)});
+  drawables.sort((a,b)=>a.y-b.y).forEach(d=>d.f());
+  // vignette
+  ctx.restore();
+  const g=ctx.createRadialGradient(VW/2,VH/2,Math.min(VW,VH)*.35,VW/2,VH/2,Math.max(VW,VH)*.75);
+  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(13,8,20,.62)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,VW,VH);
+}
+let last=performance.now();
+(function loop(t){ const dt=Math.min(.05,(t-last)/1000); last=t; frame(dt); requestAnimationFrame(loop); })(last);
+
+/* ---- UI ---- */
+const $=s=>document.querySelector(s);
+const bnum=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
+const bar=$('#bar');
+function showBar(n){
+  if(!n){bar.classList.remove('on');return}
+  $('#barWho').textContent=n.roman||'SAVE POINT';
+  $('#barSay').textContent=n.say;
+  bar.classList.add('on');
+}
+const stack=[];
+function open(id){ const el=document.getElementById(id); el.classList.add('on'); el.scrollTop=0;
+  if(id==='travel') travelSync();
+  stack.push(id); $('#back').classList.add('on'); document.body.classList.add('reading');
+  running=false; for(const k in keys)keys[k]=false; }
+function closeTop(){
+  const id=stack.pop(); if(!id)return;
+  document.getElementById(id).classList.remove('on');
+  if(!stack.length){ $('#back').classList.remove('on'); document.body.classList.remove('reading'); running=true; }
+}
+function toggle(id){ if(stack[stack.length-1]===id) closeTop(); else open(id); }
+$('#back').addEventListener('click',closeTop);
+$('#btnMap').addEventListener('click',()=>toggle('travel'));
+$('#btnHelp').addEventListener('click',()=>toggle('help'));
+
+function interact(){
+  const n=near; if(!n)return;
+  if(!visited.has(n.id)&&SECTIONS.includes(n)){ visited.add(n.id); $('#found').textContent=bnum(visited.size); }
+  renderPanel(n); open('panel');
+}
+function renderPanel(n){
+  const c=n.color||'#EFE2C4';
+  const posts=(n.posts||[]).map((p,i)=>`
+    <button class="post" data-i="${i}">
+      <div class="meta">${p.kind||''} · ${p.date||''}</div>
+      <h3>${p.title}</h3><p>${p.excerpt||''}</p>
+    </button>`).join('');
+  $('#panelIn').innerHTML=`
+    <div class="crest">
+      <div class="sym" style="border-color:${c};color:${c}">${n.icon}</div>
+      <div><h2 style="color:${c}">${n.name}</h2><span class="roman">${n.roman} · ${n.kind||''}</span></div>
+    </div>
+    <p class="lede">${n.lede}</p>
+    <div class="rule" style="background:${c}"></div>
+    ${ (n.posts&&n.posts.length)
+        ? `<div class="count">${bnum(n.posts.length)} টি লেখা</div>${posts}`
+        : (n.id==='about'||n.id==='contact' ? '' :
+           `<div class="empty">এই সেকশনে এখনও কিছু প্রকাশিত হয়নি। শিগগিরই আসছে।</div>`) }`;
+  $('#panelIn').querySelectorAll('.post').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const p=n.posts[+b.dataset.i];
+      if(p.url){ window.open(p.url,'_blank','noopener'); return; }
+      renderReader(n,p); open('reader');
+    });
+  });
+}
+function renderReader(n,p){
+  $('#readerIn').innerHTML=`
+    <div class="head" style="color:${n.color}">${n.name} · ${p.kind||''}</div>
+    <h2>${p.title}</h2>
+    <div class="byline">MOIN · ${p.date||''}</div>
+    <div class="rule" style="background:${n.color}"></div>
+    <div class="body">${(p.body||[]).map(t=>`<p>${t}</p>`).join('')}</div>
+    <div class="end">✦ ✦ ✦</div>`;
+}
+// fast travel
+$('#travelList').innerHTML=SECTIONS.map(s=>`
+  <button class="trav" data-id="${s.id}">
+    <span class="s" style="border-color:${s.color}">${s.icon}</span>
+    <span><b style="color:${s.color}">${s.name}</b><i>${s.tag}</i></span>
+    <span class="ok" data-ok="${s.id}"></span>
+  </button>`).join('');
+$('#travelList').querySelectorAll('.trav').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const s=SECTIONS.find(x=>x.id===b.dataset.id);
+    P.x=s.tx*TS+16; P.y=s.ty*TS+52; cam.x=P.x; cam.y=P.y; P.dir='up';
+    while(stack.length) closeTop();
+    near=s; showBar(s);
+  });
+});
+const travelSync=()=>SECTIONS.forEach(s=>{
+  const e=document.querySelector(`[data-ok="${s.id}"]`); if(e) e.textContent=visited.has(s.id)?'✓ দেখা হয়েছে':'';
+});
+
+// start
+$('#start').addEventListener('click',()=>{
+  $('#title').classList.remove('on'); running=true; last=performance.now();
+});
+addEventListener('keydown',e=>{ if(!running&&!stack.length&&$('#title').classList.contains('on')
+  &&(e.code==='Enter'||e.code==='Space')) $('#start').click(); });
+
+/* নিজের সার্ভারে তুললে অগ্রগতি মনে রাখতে চাইলে এই দুটো লাইন চালু করুন:
+   visited = new Set(JSON.parse(localStorage.getItem('moin_visited')||'[]'));
+   এবং interact()-এর ভেতর: localStorage.setItem('moin_visited',JSON.stringify([...visited]));
+*/
+</script>
+</body>
+</html>
