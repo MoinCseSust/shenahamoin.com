@@ -3,8 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>মইন · লেখকের গ্রহ</title>
-<meta name="description" content="বাংলা ব্যঙ্গ, প্রবন্ধ ও কল্পকাহিনির একটি ছোট্ট গ্রহ। হেঁটে বেড়ান, পাহারাদারদের খুঁজুন, পড়ুন।">
+<title>মইন · লেখকের গ্রহ — বাংলা ব্যঙ্গ, প্রবন্ধ ও রিভিউ</title>
+<meta name="description" content="মইনের বাংলা লেখা — ব্যঙ্গ, বিশ্লেষণ, মুভি রিভিউ, ইসলামি প্রবন্ধ আর রম্য — একটি ছোট্ট গ্রহে সাজানো। হেঁটে বেড়ান, পাহারাদারদের খুঁজুন, পড়ুন।">
+<meta name="author" content="মইন (Moin)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="লেখকের গ্রহ">
+<meta property="og:title" content="মইন · লেখকের গ্রহ">
+<meta property="og:description" content="মইনের বাংলা লেখা — ব্যঙ্গ, বিশ্লেষণ, মুভি রিভিউ, ইসলামি প্রবন্ধ আর রম্য — একটি ছোট্ট গ্রহে সাজানো। হেঁটে বেড়ান, পাহারাদারদের খুঁজুন, পড়ুন।">
+<meta property="og:url" content="https://shenahamoin.com/">
+<meta property="og:locale" content="bn_BD">
+<meta property="og:image" content="https://shenahamoin.com/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{ "@context": "https://schema.org", "@graph": [
+  { "@type": "WebSite", "@id": "https://shenahamoin.com/#site", "url": "https://shenahamoin.com/", "name": "লেখকের গ্রহ",
+    "alternateName": "Moin — Lekhoker Groho", "inLanguage": "bn", "description": "মইনের বাংলা লেখা — ব্যঙ্গ, বিশ্লেষণ, মুভি রিভিউ, ইসলামি প্রবন্ধ আর রম্য — একটি ছোট্ট গ্রহে সাজানো। হেঁটে বেড়ান, পাহারাদারদের খুঁজুন, পড়ুন।", "author": { "@id": "https://shenahamoin.com/#moin" } },
+  { "@type": "Person", "@id": "https://shenahamoin.com/#moin", "name": "মইন", "alternateName": "Moin", "url": "https://shenahamoin.com/",
+    "jobTitle": "লেখক ও কলামিস্ট", "email": "mailto:moin@shenahamoin.com", "homeLocation": { "@type": "Place", "name": "Toronto, Canada" } }
+] }
+</script>
 <meta name="theme-color" content="#1B1226">
 <link rel="canonical" href="https://shenahamoin.com/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -21,6 +40,8 @@
 </script>
 </head>
 <body>
+
+<noscript><div class="noscript"><h1>মইন · লেখকের গ্রহ</h1><p>মইনের বাংলা লেখা — ব্যঙ্গ, বিশ্লেষণ, মুভি রিভিউ, ইসলামি প্রবন্ধ আর রম্য — একটি ছোট্ট গ্রহে সাজানো। হেঁটে বেড়ান, পাহারাদারদের খুঁজুন, পড়ুন।</p><p>এই সাইটটি চালাতে জাভাস্ক্রিপ্ট লাগে। লেখাগুলো পড়তে <a href="read.html">লেখার পাতায় যান</a>।</p></div></noscript>
 
 <canvas id="game" tabindex="-1" role="img" aria-label="একটি ছোট্ট ত্রিমাত্রিক গ্রহ। ছয়জন পাহারাদারের কাছে ছয়টি লেখার সেকশন। হাঁটতে না চাইলে উপরের তালিকা বোতাম থেকে সরাসরি যান।"></canvas>
 
@@ -59,6 +80,7 @@
     </div>
     <button id="start">যাত্রা শুরু</button>
     <div class="keys">WASD / ARROWS TO WALK &nbsp;·&nbsp; E TO TALK &nbsp;·&nbsp; M FOR THE LIST</div>
+    <a class="plainlink" href="read.html">হাঁটতে না চাইলে — শুধু লেখাগুলো পড়ুন →</a>
   </div>
 </div>
 
@@ -73,6 +95,7 @@
   <h2 class="plain">লেখার তালিকা</h2>
   <p class="plainsub">হাঁটতে ইচ্ছে না করলে সরাসরি চলে যান। একটা সেকশন বাছুন, লেখক সেখানে পৌঁছে যাবে।</p>
   <div id="travelList"></div>
+  <p class="plainsub" style="margin-top:20px"><a class="plainlink" href="read.html">সব লেখা এক পাতায়, সাধারণ ওয়েবপেজ হিসেবে →</a></p>
 </div></div>
 
 <!-- ============ help ============ -->

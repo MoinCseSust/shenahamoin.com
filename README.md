@@ -11,6 +11,10 @@ Everything you edit is in [`js/content.js`](js/content.js).
 - `body` is a list of paragraphs. To link out instead (Facebook, Medium), leave `body` empty and set `url`.
 - About and contact text are in `PROPS`; the three secrets in `SECRETS`; the closing note in `ENDING`.
 
+## Search engines
+
+`read.html` is the same writing as an ordinary web page, so search engines can index it; each post has its own address (`read.html?s=SECTION&p=NUMBER`). It reads from `js/content.js`, so new posts appear there automatically. `robots.txt`, `sitemap.xml` and `share.png` (the link-preview image) sit in the root.
+
 ## Running it locally
 
 It is a static site with no build step. Serve the folder with any static server, for example:
